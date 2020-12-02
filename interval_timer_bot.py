@@ -12,7 +12,7 @@ from voice_announcer import VoiceAnnouncer
 
 bot = commands.Bot(command_prefix='!')
 timer = None
-
+voice_announcer = None
 
 @bot.event
 async def on_ready():
@@ -26,24 +26,31 @@ async def greeting(context):
 
 @bot.command(name='start-timer', help='Starts a timer with a specified configuration.')
 async def start_timer(context, repetitions: int, work: int, rest: int):
-    global timer
+    global timer, voice_announcer
+    # We can only run one timer at the same time.
     if timer is not None:
         await context.send('There is already an active timer, please stop it first.')
-    else:
-        timer = IntervalTimer(repetitions, work, rest)
-        VoiceAnnouncer(context, timer)
-        timer.start()
-        await context.send(f'Alright, {repetitions} repetitions of {work} seconds work and {rest} seconds break, comin\' right up!')
+        return
+    
+    timer = IntervalTimer(repetitions, work, rest)
+    timer.start()
+    # Attach voice announcer to timer if it is set up.
+    if voice_announcer is not None:
+        voice_announcer.attach(timer)
+    
+    await context.send(f'Alright, {repetitions} repetitions of {work} seconds work and {rest} seconds break, comin\' right up!')
 
 
 @bot.command(name='stop-timer', help='Stops the timer currently running.')
 async def stop_timer(context):
     global timer
-    if timer is not None:
-        timer.stop()
-        await context.send('The timer was stopped.')
-    else:
+    if timer is None:
         await context.send('There was no timer to stop, but let\'s still call this a success, shall we?')
+        return
+    timer.stop()
+    voice_announcer.detach(timer)
+    timer = None
+    await context.send('The timer was stopped.')
 
 
 @bot.command(name='join-voice', help='Instructs the bot to join the voice channel you are in.')
@@ -56,11 +63,15 @@ async def join_voice(context: commands.Context):
         return
     
     voice_client = await voice_channel.connect()
-    voice_client.play(discord.FFmpegPCMAudio('sounds/beep.mp3'))
+    global voice_announcer
+    voice_announcer = VoiceAnnouncer(voice_client)
 
 
 @bot.command(name='leave-voice', help='Instructs the bot to leave its voice channel.')
 async def leave_voice(context: commands.Context):
+    global voice_announcer
+    # TODO: Check if this actually kills the voice announcer or if it continues working
+    voice_announcer = None
     await context.voice_client.disconnect()
 
 

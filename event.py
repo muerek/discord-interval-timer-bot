@@ -10,6 +10,11 @@ class Event:
         self.listeners.append(listener)
         return self
 
+    def __isub__(self, listener):
+        """Shortcut for using -= to remove a listener."""
+        self.listeners.remove(listener)
+        return self
+
     def notify(self, *args, **kwargs):
         for listener in self.listeners:
             listener(*args, **kwargs)
