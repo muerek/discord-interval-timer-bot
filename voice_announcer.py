@@ -1,7 +1,7 @@
 import asyncio
 import discord
 
-from interval_timer import IntervalTimer
+from interval_timer import IntervalTimer, TimerPhase
 
 
 class VoiceAnnouncer():
@@ -10,8 +10,14 @@ class VoiceAnnouncer():
 
     def on_timer_tick(self, phase, done, remaining):
         print(f'Phase {phase} with {done} seconds done and {remaining} seconds remaining.')
-        if remaining == 0:
-            self._voice_client.play(discord.FFmpegPCMAudio('sounds/beep.mp3'))
+        
+        # Countdown is delivered as one audio file to avoid stuttering due to rate limiting, routing etc.
+        if remaining == 3:
+            # Note that this seems to be non-blocking without wrapping it into a task or alike.
+            self._voice_client.play(discord.FFmpegPCMAudio('sounds/countdown.mp3'))
+
+        if remaining == 5 and phase == TimerPhase.Rest:
+            self._voice_client.play(discord.FFmpegPCMAudio('sounds/prepare.mp3'))
 
     def on_timer_started(self):
         print('Timer started.')

@@ -18,7 +18,7 @@ class IntervalTimer:
     def start(self):
         print('Timer started.')
         self._task = asyncio.create_task(self._run_timer())
-        self.started.notify()
+        self.started.invoke()
 
     def stop(self):
         print('Timer stopped.')
@@ -34,18 +34,18 @@ class IntervalTimer:
             while work_done < self._work:
                 await asyncio.sleep(1)
                 work_done += 1
-                self.tick.notify(phase=TimerPhase.Work, done=work_done, remaining=self._work - work_done)
+                self.tick.invoke(phase=TimerPhase.Work, done=work_done, remaining=self._work - work_done)
             
             # Rest phase.
             rest_done = 0
             while rest_done < self._rest:
                 await asyncio.sleep(1)
                 rest_done += 1
-                self.tick.notify(phase=TimerPhase.Rest, done=rest_done, remaining=self._rest - rest_done)
+                self.tick.invoke(phase=TimerPhase.Rest, done=rest_done, remaining=self._rest - rest_done)
             
             repetitions_done += 1
         
-        self.ended.notify()
+        self.ended.invoke()
 
 
 class TimerPhase(enum.Enum):
