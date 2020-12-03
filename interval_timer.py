@@ -4,18 +4,34 @@ import enum
 from event import Event
 
 class IntervalTimer:
-    def __init__(self, repetitions: int, work: int, rest: int):
+    def __init__(self):
         # Set up the events that any announcement services can listen to.
         self.started = Event()
         self.tick = Event()
         self.ended = Event()
 
-        # Config should not be modified after it is set.
+        self._repetitions = 4
+        self._work = 45
+        self._rest = 15
+
+        self._task = None
+
+    def running(self):
+        return not (self._task is None or self._task.done())
+
+    def print_config(self):
+        return f'{self._repetitions} repetitions of {self._work} seconds work and {self._rest} seconds rest'
+
+    def start(self, repetitions: int, work: int, rest: int):
         self._repetitions = repetitions
         self._work = work
         self._rest = rest
+        
+        self._task = asyncio.create_task(self._run_timer())
+        self.started.invoke()
+        print('Timer started.')
 
-    def start(self):
+    def restart(self):
         self._task = asyncio.create_task(self._run_timer())
         self.started.invoke()
         print('Timer started.')

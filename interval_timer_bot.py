@@ -11,7 +11,7 @@ from voice_announcer import VoiceAnnouncer
 
 
 bot = commands.Bot(command_prefix='!')
-timer = None
+timer = IntervalTimer()
 voice_announcer = None
 
 @bot.event
@@ -24,56 +24,68 @@ async def greeting(context):
     await context.send('Hello there!')
 
 
-@bot.command(name='start-timer', help='Starts a timer with a specified configuration.')
+@bot.command(name='start', help='Starts the timer with specified settings.')
 async def start_timer(context, repetitions: int, work: int, rest: int):
-    global timer, voice_announcer
+    global timer
     # We can only run one timer at the same time.
-    if timer is not None:
-        await context.send('There is already an active timer, please stop it first.')
+    if timer.running():
+        await context.send('Timer is already running, please stop it first.')
         return
     
-    timer = IntervalTimer(repetitions, work, rest)
-    # Attach voice announcer to timer if it is set up.
-    if voice_announcer is not None:
-        voice_announcer.attach(timer)
-    timer.start()
-    
-    await context.send(f'Alright, {repetitions} repetitions of {work} seconds work and {rest} seconds break, comin\' right up!')
+    timer.start(repetitions, work, rest)
+    await context.send(f'Alright, {timer.print_config()}, comin\' right up!')
+
+@bot.command(name='restart', help='Restart the timer with previous settings.')
+async def restart_timer(context):
+    global timer
+    if timer.running():
+        await context.send('Timer is already running, please stop it first.')
+        return
+
+    timer.restart()
+    await context.send(f'Here we go again... {timer.print_config()} for you.')
 
 
-@bot.command(name='stop-timer', help='Stops the timer currently running.')
+@bot.command(name='stop', help='Stops the timer currently running.')
 async def stop_timer(context):
     global timer
-    if timer is None:
-        await context.send('There was no timer to stop, but let\'s still call this a success, shall we?')
+    if not timer.running():
+        await context.send('There is no timer running, so let\'s call this a success, shall we?')
         return
+    
     timer.stop()
-    voice_announcer.detach(timer)
-    timer = None
-    await context.send('The timer was stopped.')
+    await context.send('Timer stopped.')
 
 
-@bot.command(name='join-voice', help='Instructs the bot to join the voice channel you are in.')
+@bot.command(name='show', help='Shows the current settings for the timer.')
+async def show_timer_config(context):
+    global timer
+    await context.send(f'Let\'s see... the timer is set for {timer.print_config()}.')
+    await context.send('If that\'s okay for you, just restart the timer, otherwise tell me something new.')
+
+
+@bot.command(name='voice', help='Instructs the bot to join the voice channel you are in.')
 async def join_voice(context: commands.Context):
     # Not sure how to do this nicely, in other languages I would use the null-conditional operator on voice
     voice_channel = context.author.voice.channel if context.author.voice is not None else None
     
     if voice_channel is None:
-        await context.send('Oh my, I do not know where to go. Please join a voice channel so I can follow you.')
+        await context.send('Oh my, I do not know where to go. Please join a voice channel and I will follow you.')
         return
     
     voice_client = await voice_channel.connect()
-    global voice_announcer
+    
+    global voice_announcer, timer
     voice_announcer = VoiceAnnouncer(voice_client)
+    voice_announcer.attach(timer)
 
 
-@bot.command(name='leave-voice', help='Instructs the bot to leave its voice channel.')
+@bot.command(name='mute', help='Instructs the bot to leave its voice channel.')
 async def leave_voice(context: commands.Context):
-    global voice_announcer
-    # TODO: Check if this actually kills the voice announcer or if it continues working
+    global voice_announcer, timer
+    voice_announcer.detach(timer)
     voice_announcer = None
     await context.voice_client.disconnect()
-
 
 
 bot.run(os.getenv('BOT_TOKEN'))
