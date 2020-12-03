@@ -60,7 +60,8 @@ async def stop_timer(context):
 @bot.command(name='show', help='Shows the current settings for the timer.')
 async def show_timer_config(context):
     global timer
-    await context.send(f'Let\'s see... the timer is set for {timer.print_config()}.')
+    await context.send('Let\'s see...')
+    await context.send(f'The timer is set for {timer.print_config()}.')
     await context.send('If that\'s okay for you, just restart the timer, otherwise tell me something new.')
 
 
@@ -70,7 +71,8 @@ async def join_voice(context: commands.Context):
     voice_channel = context.author.voice.channel if context.author.voice is not None else None
     
     if voice_channel is None:
-        await context.send('Oh my, I do not know where to go. Please join a voice channel and I will follow you.')
+        await context.send('Oh my, I do not know where to go.')
+        await context.send('Please join a voice channel and I will follow you.')
         return
     
     voice_client = await voice_channel.connect()
