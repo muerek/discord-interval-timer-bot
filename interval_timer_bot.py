@@ -33,10 +33,10 @@ async def start_timer(context, repetitions: int, work: int, rest: int):
         return
     
     timer = IntervalTimer(repetitions, work, rest)
-    timer.start()
     # Attach voice announcer to timer if it is set up.
     if voice_announcer is not None:
         voice_announcer.attach(timer)
+    timer.start()
     
     await context.send(f'Alright, {repetitions} repetitions of {work} seconds work and {rest} seconds break, comin\' right up!')
 
