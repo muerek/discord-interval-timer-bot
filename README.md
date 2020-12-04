@@ -3,8 +3,18 @@
 This is a simple Python-based bot for Discord. It provides an interval timer with voice announcements designed to be used for HIIT workouts, for example. The timer will run for a specified number of intervals. Each interval has a work phase and a rest phase.
 
 ## Setup and run
+Always do this:
 1. Create an application and add a bot to it in the [Discord developer portal](https://discord.com/developers/applications).
-1. Get the bot token and store it either in an environment variable named `BOT_TOKEN` or add it under the same name to an `.env` file in the project root. The bot is already set up to pick up `.env` files.
+1. Get the bot token from the dashboard.
+
+Then either do that to run the bot inside a container:
+1. Build a docker image using the dockerfile in this repository.
+1. Run the docker image and pass the bot token to the container as a environment variable named `BOT_TOKEN`, i.e. run `docker run -e BOT_TOKEN=<token> <image> `.
+
+Or do that to run the bot outside a container:
+1. Store the bot token either in an environment variable named `BOT_TOKEN` or add it under the same name to an `.env` file in the project root. The bot is already set up to pick up `.env` files.
+1. Install [FFmeg](https://ffmpeg.org/) as it is required for audio processing.
+1. Install the necessary Python packages with `python -m pip install -r requirements.txt`.
 1. Run `interval_timer_bot.py`.
 
 ## Usage
